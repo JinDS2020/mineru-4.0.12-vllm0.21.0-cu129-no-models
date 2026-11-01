@@ -1,0 +1,8 @@
+62a5b40dd16d193f68037445e130b0a19ab30c92f4fb3b2113f0afc122db5f2b  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part001
+ef37373a5c7ad0af5947b89bfe2166ef5540bad5dd1b5bb1b9491d789fbcc0ce  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part002
+0b6b64178e057dd93f335c1b9cc99787601e24884ee1c976bd935d8be1c65169  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part003
+1ce2e661b1eb14216d28fc826eff0a9a7e92c31c75ba9442c09afdfc1aebd67b  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part004
+178e527eeb76247d5dcf217761eb6d1b5a22b8219c006eaa36f472ca4735048d  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part005
+afac1d2b943433137b50dcd22fcce7c620929c000ba6998a98c6768a47abc343  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part006
+8a011f4e93a3301372733ab3b65947dde95ac014580a1aefa14ae4cac5a69ae1  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part007
+5c1bfd4cf80ffe7c826baa78a20fb78bf640fcdb9e9e9ffff074db29e1269fba  mineru-4.0.12-vllm0.21.0-cu129-linux-amd64-no-models.tar.part008
