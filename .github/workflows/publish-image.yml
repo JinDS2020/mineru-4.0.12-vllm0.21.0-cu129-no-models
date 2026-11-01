@@ -1,0 +1,16 @@
+name: Publish byte-identical split Docker archive
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Fetch public restoration instructions
+        run: git clone --depth 1 https://github.com/JinDS2020/mineru-4.0.12-vllm0.21.0-cu129-no-models.git "$RUNNER_TEMP/image-release"
+      - name: Restore, verify and publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 "$RUNNER_TEMP/image-release/cloud/restore-release.py"
