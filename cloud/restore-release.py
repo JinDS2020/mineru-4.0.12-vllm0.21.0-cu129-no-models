@@ -11,6 +11,7 @@ import subprocess
 import time
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor
 
 ROOT = Path(__file__).resolve().parent
 REPO = 'JinDS2020/mineru-4.0.12-vllm0.21.0-cu129-no-models'
@@ -22,6 +23,12 @@ target.mkdir(exist_ok=True)
 
 def gh(*args):
     return subprocess.check_output(['gh', *args], text=True).strip()
+
+existing = json.loads(gh('release', 'view', TAG, '--repo', REPO, '--json', 'assets'))['assets']
+existing = {item['name']: item for item in existing}
+expected_parts = {part['name']: part for part in manifest['parts']}
+pool = ThreadPoolExecutor(max_workers=3)
+pending_uploads = []
 
 class PartsWriter:
     def __init__(self):
@@ -53,10 +60,18 @@ class PartsWriter:
                 self.output = None
                 assert self.part_hash.hexdigest() == part['sha256'], part['name']
                 print('Verified part:', part['name'], flush=True)
-                upload(target / part['name'])
+                pending_uploads.append(pool.submit(upload, target / part['name']))
                 self.index += 1
 
 def upload(path):
+    if path.name in existing:
+        expected = expected_parts.get(path.name)
+        if expected is None:
+            expected = {'size': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+        previous = existing[path.name]
+        if previous['size'] == expected['size'] and previous.get('digest') == 'sha256:' + expected['sha256']:
+            print('Already uploaded and verified:', path.name, flush=True)
+            return
     for attempt in range(1, 4):
         print(f'Uploading {path.name}, attempt {attempt}', flush=True)
         result = subprocess.run(['gh', 'release', 'upload', TAG, str(path), '--repo', REPO, '--clobber'])
@@ -90,19 +105,19 @@ for record in recipe['records']:
                     while skip:
                         block = response.read(min(skip, 8 * 1024 * 1024))
                         if not block:
-                            raise RuntimeError('Unexpected EOF while skipping prefix')
+                            raise EOFError('Unexpected EOF while skipping prefix')
                         skip -= len(block)
                 elif consumed:
                     assert response.headers['Content-Range'].startswith(f'bytes {consumed}-')
                 while consumed < record['size']:
                     block = response.read(min(8 * 1024 * 1024, record['size'] - consumed))
                     if not block:
-                        raise RuntimeError('Unexpected EOF in layer')
+                        raise EOFError('Unexpected EOF in layer')
                     blob_hash.update(block)
                     writer.write(block)
                     consumed += len(block)
             break
-        except (OSError, urllib.error.URLError, http.client.IncompleteRead):
+        except (OSError, EOFError, urllib.error.URLError, http.client.IncompleteRead):
             if attempt == 5:
                 raise
             print(f'Retrying layer at offset {consumed}', flush=True)
@@ -111,6 +126,9 @@ for record in recipe['records']:
 assert writer.output is None and writer.index == len(manifest['parts'])
 assert writer.total == manifest['size'] and writer.total_hash.hexdigest() == manifest['sha256']
 print('PASS: reconstructed archive matches original SHA256:', writer.total_hash.hexdigest(), flush=True)
+for future in pending_uploads:
+    future.result()
+pool.shutdown(wait=True)
 for path in sorted((ROOT / 'distribution').iterdir()):
     shutil.copy2(path, target / path.name)
     upload(target / path.name)
